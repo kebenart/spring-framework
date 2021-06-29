@@ -215,6 +215,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 						logger.debug("Could not resolve target class for bean with name '" + beanName + "'", ex);
 					}
 				}
+				// 如果bean上有注解@Controller 或 @RequestMapping
 				if (beanType != null && isHandler(beanType)) {
 					detectHandlerMethods(beanName);
 				}

@@ -495,14 +495,31 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
 	protected void initStrategies(ApplicationContext context) {
+		// Content-Type 为 multipart/* 的 请求解析器
 		initMultipartResolver(context);
+
+		// 本地化( 国际化 )解析器
 		initLocaleResolver(context);
+
+		// 主题解析器接口
 		initThemeResolver(context);
+
+		// 处理器匹配接口 (用于获得请求对应的处理器和拦截器们)
 		initHandlerMappings(context);
+
+		// 处理器适配器 (相当于Handler的执行器)
 		initHandlerAdapters(context);
+
+		// 处理器异常解析器 (将处理器处理过程产生的异常转换对应的ModelAndView)
 		initHandlerExceptionResolvers(context);
+
+		// 请求到视图名的转换器接口
 		initRequestToViewNameTranslator(context);
+
+		// 实体解析器接口，根据视图名和国际化，获得最终的视图 View 对象
 		initViewResolvers(context);
+
+		// FlashMap 管理器接口，负责重定向时，保存参数到临时存储中
 		initFlashMapManager(context);
 	}
 
@@ -966,17 +983,17 @@ public class DispatcherServlet extends FrameworkServlet {
 				processedRequest = checkMultipart(request);
 				multipartRequestParsed = (processedRequest != request);
 
-				// 确定当前请求的处理程序。
+				// 1.根据request获取相应的HandlerMapping (包含拦截器和处理器)
 				mappedHandler = getHandler(processedRequest);
 				if (mappedHandler == null) {
 					noHandlerFound(processedRequest, response);
 					return;
 				}
 
-				// 确定当前请求的处理程序适配器
+				// 2.根据HandlerMapping获取对应的HandlerAdapter
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 
-				// 如果处理程序支持，处理last-modified头。
+				//// 处理 last-modified 消息头
 				String method = request.getMethod();
 				boolean isGet = "GET".equals(method);
 
@@ -990,12 +1007,11 @@ public class DispatcherServlet extends FrameworkServlet {
 					}
 				}
 
-				// 执行拦截器  是否被拦截 被拦截 就返回
+				// 3.执行拦截器 preHandle
 				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
 					return;
 				}
-				// 重点
-				// 生成ModelAndView
+				// 4.通过Handler来调用具体函数并返回结果 ModelAndView
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 
@@ -1003,10 +1019,10 @@ public class DispatcherServlet extends FrameworkServlet {
 					return;
 				}
 
-				// 应用默认视图名
+				// 如果Controller没有返回View则这里生成默认的View
 				applyDefaultViewName(processedRequest, mv);
 
-				// 调用拦截器的PostHandle方法
+				// 5. 调用拦截器的postHandle
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
 			catch (Exception ex) {
@@ -1018,7 +1034,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				dispatchException = new NestedServletException("Handler dispatch failed", err);
 			}
 
-
+			// 6.解析并渲染视图View
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		}
 		catch (Exception ex) {
@@ -1191,6 +1207,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 	/**
 	 * 返回此请求的HandlerExecutionChain。
+	 * 包含Handler和拦截器
 	 */
 	@Nullable
 	protected HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
@@ -1315,7 +1332,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		View view;
 		String viewName = mv.getViewName();
 		if (viewName != null) {
-			// 我们需要解析视图名称。
+			// 通过ViewResolver解析视图
 			view = resolveViewName(viewName, mv.getModelInternal(), locale, request);
 			if (view == null) {
 				throw new ServletException("Could not resolve view with name '" + mv.getViewName() +
@@ -1339,7 +1356,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			if (mv.getStatus() != null) {
 				response.setStatus(mv.getStatus().value());
 			}
-			// 呈现视图
+			// 渲染视图，并将结果返回给用户
 			view.render(mv.getModelInternal(), request, response);
 		}
 		catch (Exception ex) {

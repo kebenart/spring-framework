@@ -85,9 +85,7 @@ import javax.servlet.http.HttpServletRequest;
 public interface MultipartResolver {
 
 	/**
-	 * Determine if the given request contains multipart content.
-	 * <p>Will typically check for content type "multipart/form-data", but the actually
-	 * accepted requests might depend on the capabilities of the resolver implementation.
+	 * 是否为 multipart 请求
 	 * @param request the servlet request to be evaluated
 	 * @return whether the request contains multipart content
 	 */
